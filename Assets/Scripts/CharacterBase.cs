@@ -1,44 +1,58 @@
 ﻿using UnityEngine;
-
+using UnityEngine.AI;
 public abstract class CharacterBase : MonoBehaviour
 {
-    [Header("References")]
-    public Animator animator;
-    public float moveSpeed = 3f;
-
+    [SerializeField] protected int team;
+    protected CharacterStats stats;
+    protected Animator animator;
     protected Vector2 moveInput;
     protected bool isDead = false;
     protected bool isAttacking = false;
+    protected bool isMove = false;
+    private void Awake()
+    {
+        Init();
+    }
 
+    protected virtual void Init()
+    {
+        stats = new CharacterStats();
+        animator = GetComponent<Animator>();
+        stats.InitStats();
+        CharacterManager.Instance.Register(this);
+    }
     protected virtual void Update()
     {
         if (isDead) return;
 
         HandleInput();
-        HandleMovement();
         HandleAnimation();
     }
 
-    protected abstract void HandleInput(); // Player/Bot xử lý riêng
+    protected abstract void HandleInput();
 
-    protected virtual void HandleMovement()
+    protected void MoveCharacter(Vector2 direction)
     {
-        Vector3 moveDir = new Vector3(moveInput.x, 0, moveInput.y);
-        transform.Translate(moveDir * moveSpeed * Time.deltaTime);
+        Vector3 move = new Vector3(direction.x, 0, direction.y) * stats.baseMoveSpeed * Time.deltaTime;
+        transform.Translate(move, Space.World);
+
+        if (move != Vector3.zero)
+        {
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(move), 0.2f);
+        }
     }
 
     protected virtual void HandleAnimation()
     {
-        animator.SetBool("IsWalking", moveInput.magnitude > 0.1f);
+        animator.SetBool("IsWalking", isMove);
     }
 
-    // === Các hành động chính ===
     public virtual void Attack()
     {
         if (isDead || isAttacking) return;
         animator.SetTrigger("Punch");
         isAttacking = true;
-        Invoke(nameof(ResetAttack), 0.5f); // reset sau khi anim kết thúc
+        Invoke(nameof(ResetAttack), 0.5f);
     }
 
     public virtual void Jump()
@@ -47,10 +61,16 @@ public abstract class CharacterBase : MonoBehaviour
         animator.SetTrigger("Jump");
     }
 
-    public virtual void TakeDamage()
+    public virtual void TakeDamage(float idAtaack, int damage)
     {
         if (isDead) return;
+        animator.SetFloat("AnimID", idAtaack);
         animator.SetTrigger("Hit");
+        stats.currentHP -= damage;
+        if (stats.currentHP <= 0)
+        {
+            Knockout();
+        }
     }
 
     public virtual void Knockout()
@@ -58,6 +78,7 @@ public abstract class CharacterBase : MonoBehaviour
         if (isDead) return;
         animator.SetTrigger("Knockout");
         isDead = true;
+        CharacterManager.Instance.Unregister(this);
     }
 
     public virtual void Celebrate()
@@ -69,4 +90,22 @@ public abstract class CharacterBase : MonoBehaviour
     {
         isAttacking = false;
     }
+
+    public void SetLevel(int level)
+    {
+        stats.level = level;
+        stats.InitStats();
+    }
+
+    public int GetTeam()
+    {
+        return team;
+    }
+
+    public void SetTeam(int team)
+    {
+        this.team = team;
+    }
+
+    public bool IsDead => isDead;
 }

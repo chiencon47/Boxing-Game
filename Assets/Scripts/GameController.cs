@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class GameController : MonoBehaviour
 {
-    public static GameController Instance;
+    public static GameController Instance { get; private set; }
 
     public Joystick joystick;
     private void Awake()

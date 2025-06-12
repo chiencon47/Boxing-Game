@@ -1,15 +1,22 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlayerCharacter : CharacterBase
 {
+    private Joystick joystick;
+
+    private void Start()
+    {
+        joystick = GameController.Instance.joystick;
+    }
+
     protected override void HandleInput()
     {
-        moveInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
-
-        if (Input.GetKeyDown(KeyCode.J)) Attack();
-        if (Input.GetKeyDown(KeyCode.Space)) Jump();
-        if (Input.GetKeyDown(KeyCode.H)) TakeDamage();
-        if (Input.GetKeyDown(KeyCode.K)) Knockout();
-        if (Input.GetKeyDown(KeyCode.V)) Celebrate();
+        Vector2 direction = new Vector2(joystick.Horizontal, joystick.Vertical);
+        isMove = direction.magnitude > 0f;
+        if (isMove)
+        {
+            MoveCharacter(direction.normalized);
+        }
     }
 }
+
