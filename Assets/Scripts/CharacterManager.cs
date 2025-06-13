@@ -45,8 +45,20 @@ public class CharacterManager : MonoBehaviour
 
     public CharacterBase GetClosestEnemy(Vector3 fromPosition, int team)
     {
-        return GetEnemies(team)
-            .OrderBy(c => Vector3.SqrMagnitude(fromPosition - c.transform.position))
-            .FirstOrDefault();
+        var enemies = GetEnemies(team);
+        CharacterBase closest = null;
+        float minSqrDist = float.MaxValue;
+
+        foreach (var enemy in enemies)
+        {
+            float sqrDist = (fromPosition - enemy.transform.position).sqrMagnitude;
+            if (sqrDist < minSqrDist)
+            {
+                minSqrDist = sqrDist;
+                closest = enemy;
+            }
+        }
+
+        return closest;
     }
 }

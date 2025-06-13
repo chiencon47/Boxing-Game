@@ -50,9 +50,11 @@ public abstract class CharacterBase : MonoBehaviour
     public virtual void Attack()
     {
         if (isDead || isAttacking) return;
+
         animator.SetTrigger("Punch");
         isAttacking = true;
-        Invoke(nameof(ResetAttack), 0.5f);
+
+        Invoke(nameof(ResetAttack), 1f);
     }
 
     public virtual void Jump()
